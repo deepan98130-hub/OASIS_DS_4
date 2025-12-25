@@ -1,0 +1,44 @@
+from google.colab import files
+uploaded = files.upload()
+import pandas as pd
+import numpy as np
+
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+# Load dataset
+df = pd.read_excel("email_spam_dataset.xlsx")
+
+# Display first few rows
+df.head()
+# Check dataset info
+df.info()
+
+# Check label distribution
+df['label'].value_counts()
+X = df['email_text']
+y = df['label']
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+vectorizer = TfidfVectorizer(stop_words='english')
+
+X_train_tfidf = vectorizer.fit_transform(X_train)
+X_test_tfidf = vectorizer.transform(X_test)
+model = MultinomialNB()
+model.fit(X_train_tfidf, y_train)
+y_pred = model.predict(X_test_tfidf)
+
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("\nClassification Report:\n", classification_report(y_test, y_pred))
+print("\nConfusion Matrix:\n", confusion_matrix(y_test, y_pred))
+def predict_email(email):
+    email_tfidf = vectorizer.transform([email])
+    prediction = model.predict(email_tfidf)
+    return "Spam" if prediction[0] == 1 else "Not Spam"
+
+# Test examples
+print(predict_email("Congratulations! You won a free laptop. Click now"))
+print(predict_email("Hi, please find the meeting notes attached"))
